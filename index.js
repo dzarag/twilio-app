@@ -1,43 +1,70 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
 
 const app = express();
 const port = process.env.PORT;
 
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
-app.post('/call', (request, response) => {
+// Create a route that will handle Twilio webhook requests, sent as an
+// HTTP POST to /voice in our application
+app.post('/voice', (request, response) => {
   // Use the Twilio Node.js SDK to build an XML response
   const twiml = new VoiceResponse();
 
-  /** helper function to set up a <Gather> */
-  function gather() {
-    const gatherNode = twiml.gather({
-      numDigits: 1,
-    });
-    gatherNode.say('For sales, press 1. For support, press 2.');
+  const gather = twiml.gather({
+    input: 'speech',
+    timeout: 3,
+    hints: 'Joseph Schwarz, Erna Müller',
+    action: '/name',
+    language: 'de-DE',
+  });
+  gather.say(
+    'Willkommen bei "Essen für alle". Wir helfen Ihnen dabei, jemand zu finden, der für Sie einkauft, wenn sie selbst nicht dazu in der Lage sind. Wenn sich innerhalb von 30 Minuten nach Aufgabe Ihrer Bestellung niemand bei Ihnen meldet, melden wir uns persönlich bei Ihnen. Um zu Beginnen, nennen Sie uns bitte Ihren Namen:',
+    { language: 'de-DE' }
+  );
 
-    // If the user doesn't enter input, loop
-    twiml.redirect('/call');
-  }
+  // If the user doesn't enter input, loop
+  twiml.redirect('/repeat-name');
 
-  // If the user entered digits, process their request
-  if (request.body.Digits) {
-    switch (request.body.Digits) {
-      case '1':
-        twiml.say('You selected sales. Good for you!');
-        break;
-      case '2':
-        twiml.say('You need support. We will help!');
-        break;
-      default:
-        twiml.say("Sorry, I don't understand that choice.").pause();
-        gather();
-        break;
-    }
+  // Render the response as XML in reply to the webhook request
+  response.type('text/xml');
+  response.send(twiml.toString());
+});
+
+app.post('/repeat-name', (request, response) => {
+  const twiml = new VoiceResponse();
+
+  const gather = twiml.gather({
+    input: 'speech',
+    timeout: 3,
+    hints: 'Joseph Schwarz, Erna Müller',
+    action: '/name',
+    language: 'de-DE',
+  });
+
+  gather.say('Ich habe sie leider nicht verstanden...', { language: 'de-DE' });
+  // If the user doesn't enter input, loop
+  twiml.redirect('/repeat-name');
+
+  // Render the response as XML in reply to the webhook request
+  response.type('text/xml');
+  response.send(twiml.toString());
+});
+
+// Create a route that will handle <Gather> input
+app.post('/name', (request, response) => {
+  // Use the Twilio Node.js SDK to build an XML response
+  const twiml = new VoiceResponse();
+
+  if (!request.body.SpeechResult) {
+    twiml.say('Ich habe sie leider nicht verstanden...', { language: 'de-DE' });
   } else {
-    // If no input was sent, use the <Gather> verb to collect user input
-    gather();
+    twiml.say(
+      `Willkommen bei "Essen für alle", ${request.body.SpeechResult}.`,
+      { language: 'de-DE' }
+    );
   }
 
   // Render the response as XML in reply to the webhook request

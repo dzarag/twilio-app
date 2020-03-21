@@ -7,6 +7,8 @@ const port = process.env.PORT;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
+const shoppingItems = [];
+
 // Create a route that will handle Twilio webhook requests, sent as an
 // HTTP POST to /voice in our application
 app.post('/voice', (request, response) => {
@@ -126,6 +128,112 @@ app.post('/address', (request, response) => {
       }
     );
   }
+
+  twiml.redirect('/order-item');
+
+  // Render the response as XML in reply to the webhook request
+  response.type('text/xml');
+  response.send(twiml.toString());
+});
+
+app.post('/repeat-order-item', (request, response) => {
+  const twiml = new VoiceResponse();
+
+  const gather = twiml.gather({
+    input: 'speech',
+    timeout: 5,
+    action: '/order-item',
+    language: 'de-DE',
+  });
+
+  gather.say(
+    'Ich habe sie leider nicht verstanden, können Sie es bitte nochmal wiederholen?',
+    { language: 'de-DE' }
+  );
+  // If the user doesn't enter input, loop
+  twiml.redirect('/repeat-order-item');
+
+  // Render the response as XML in reply to the webhook request
+  response.type('text/xml');
+  response.send(twiml.toString());
+});
+
+app.post('/order-item', (request, response) => {
+  const twiml = new VoiceResponse();
+
+  const gather = twiml.gather({
+    input: 'dtmf speech',
+    timeout: 5,
+    action: '/confirm-item',
+    language: 'de-DE',
+  });
+
+  gather.say(
+    `Sie können nun gerne Ihre Bestellung aufgeben. Nach der Nennung eines Produktes drücken Sie bitte die 1 – und wir bestätigen, ob wir Sie richtig verstanden haben. Falls Sie Hilfe benötigen, drücken Sie bitte die 2.`,
+    {
+      language: 'de-DE',
+    }
+  );
+
+  // Render the response as XML in reply to the webhook request
+  response.type('text/xml');
+  response.send(twiml.toString());
+});
+
+app.post('/add-another-item', (request, response) => {
+  const twiml = new VoiceResponse();
+
+  const gather = twiml.gather({
+    input: 'dtmf speech',
+    timeout: 5,
+    action: '/confirm-item',
+    language: 'de-DE',
+  });
+
+  gather.say(`Nehnen Sie bitt Ihre nächstes Produkt`, {
+    language: 'de-DE',
+  });
+
+  // Render the response as XML in reply to the webhook request
+  response.type('text/xml');
+  response.send(twiml.toString());
+});
+
+app.post('/confirm-item', (request, response) => {
+  const twiml = new VoiceResponse();
+
+  if (request.body.Digits) {
+    switch (request.body.Digits) {
+      case '1':
+        if (!request.body.SpeechResult) {
+          twiml.redirect('/repeat-order-item');
+        } else {
+          shoppingItems.push(request.body.SpeechResult.toLowerCase());
+          twiml.say(`${request.body.SpeechResult} an Ihre Liste hinzugefügt.`, {
+            language: 'de-DE',
+          });
+          twiml.redirect('/add-another-item');
+        }
+        break;
+      case '2':
+        twiml.say('Wie können wir Ihnen helfen', {
+          language: 'de-DE',
+        });
+        break;
+      case '0':
+        twiml.say(`Vielen Dank für Ihre Bestellung.`, {
+          language: 'de-DE',
+        });
+        break;
+      default:
+        twiml.redirect('/repeat-order-item');
+        break;
+    }
+  } else {
+    // If no input was sent, redirect to the /voice route
+    twiml.redirect('/repeat-order-item');
+  }
+
   // Render the response as XML in reply to the webhook request
   response.type('text/xml');
   response.send(twiml.toString());

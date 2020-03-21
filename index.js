@@ -15,8 +15,7 @@ app.post('/voice', (request, response) => {
 
   const gather = twiml.gather({
     input: 'speech',
-    timeout: 3,
-    hints: 'Joseph Schwarz, Erna Müller',
+    timeout: 5,
     action: '/name',
     language: 'de-DE',
   });
@@ -38,13 +37,15 @@ app.post('/repeat-name', (request, response) => {
 
   const gather = twiml.gather({
     input: 'speech',
-    timeout: 3,
-    hints: 'Joseph Schwarz, Erna Müller',
+    timeout: 5,
     action: '/name',
     language: 'de-DE',
   });
 
-  gather.say('Ich habe sie leider nicht verstanden...', { language: 'de-DE' });
+  gather.say(
+    'Ich habe sie leider nicht verstanden, können Sie es bitte nochmal wiederholen?',
+    { language: 'de-DE' }
+  );
   // If the user doesn't enter input, loop
   twiml.redirect('/repeat-name');
 
@@ -59,17 +60,72 @@ app.post('/name', (request, response) => {
   const twiml = new VoiceResponse();
 
   if (!request.body.SpeechResult) {
-    twiml.say('Ich habe sie leider nicht verstanden...', { language: 'de-DE' });
+    twiml.redirect('/repeat-name');
   } else {
     twiml.say(
       `Willkommen bei "Essen für alle", ${request.body.SpeechResult}.`,
       { language: 'de-DE' }
     );
+    twiml.pause();
+    const gather = twiml.gather({
+      input: 'speech',
+      timeout: 5,
+      action: '/address',
+      language: 'de-DE',
+    });
+    gather.say('We lautet die Adresse, an die wir liefern sollen?', {
+      language: 'de-DE',
+    });
   }
 
   // Render the response as XML in reply to the webhook request
   response.type('text/xml');
   response.send(twiml.toString());
+});
+
+app.post('/repeat-address', (request, response) => {
+  const twiml = new VoiceResponse();
+
+  const gather = twiml.gather({
+    input: 'speech',
+    timeout: 5,
+    action: '/address',
+    language: 'de-DE',
+  });
+
+  gather.say(
+    'Ich habe sie leider nicht verstanden, können Sie es bitte nochmal wiederholen?',
+    { language: 'de-DE' }
+  );
+  // If the user doesn't enter input, loop
+  twiml.redirect('/repeat-address');
+
+  // Render the response as XML in reply to the webhook request
+  response.type('text/xml');
+  response.send(twiml.toString());
+});
+
+app.post('/address', (request, response) => {
+  const twiml = new VoiceResponse();
+
+  if (!request.body.SpeechResult) {
+    twiml.redirect('/repeat-address');
+  } else {
+    twiml.say(`Ok, wir werden an ${request.body.SpeechResult} liefern.`, {
+      language: 'de-DE',
+    });
+    twiml.pause();
+    twiml.say('Vielen Dank', {
+      language: 'de-DE',
+    });
+    twiml.pause({ length: 2 });
+    twiml.say(
+      'Für Rückfragen speichern wir Ihre Telefonnummer, bis wir Ihnen Ihre Bestellung übergeben haben.',
+      {
+        language: 'de-DE',
+      }
+    );
+  }
 });
 
 app.listen(port, () => {

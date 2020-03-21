@@ -73,7 +73,7 @@ app.post('/name', (request, response) => {
       action: '/address',
       language: 'de-DE',
     });
-    gather.say('We lautet die Adresse, an die wir liefern sollen?', {
+    gather.say('Wie lautet die Adresse, an die wir liefern sollen?', {
       language: 'de-DE',
     });
   }
@@ -126,6 +126,9 @@ app.post('/address', (request, response) => {
       }
     );
   }
+  // Render the response as XML in reply to the webhook request
+  response.type('text/xml');
+  response.send(twiml.toString());
 });
 
 app.listen(port, () => {

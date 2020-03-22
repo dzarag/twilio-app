@@ -240,9 +240,16 @@ app.post('/confirm-item', (request, response) => {
         axios
           .post(`${process.env.WEBAPP_URL}/upload`, orderObject)
           .then(function(response) {
-            console.log(response);
+            orderObject.name = '';
+            orderObject.address = '';
+            orderObject.phoneNumber = '';
+            orderObject.shoppingItems = [];
           })
           .catch(function(error) {
+            orderObject.name = '';
+            orderObject.address = '';
+            orderObject.phoneNumber = '';
+            orderObject.shoppingItems = [];
             console.log(error);
           });
       default:

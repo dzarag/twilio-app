@@ -290,7 +290,7 @@ app.post('/save-item', (request, response) => {
         });
         gather.say(
           `Ihre Bestell Artikel ${
-            items.slice(-1)[0]
+            orderObject.shoppingItems.slice(-1)[0]
           } würde an Ihre Liste hinzugefügt. Bitte nehnen sie ein weiteres Produkt, oder drücken sie die 0 um ihre Bestellung zu beenden`,
           {
             language: 'de-DE',

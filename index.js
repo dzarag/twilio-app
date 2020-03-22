@@ -8,13 +8,20 @@ const port = process.env.PORT;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
-const shoppingItems = [];
+const orderObject = {
+  name: '',
+  address: '',
+  shoppingItems: [],
+  phoneNumber: '',
+};
 
 // Create a route that will handle Twilio webhook requests, sent as an
 // HTTP POST to /voice in our application
 app.post('/voice', (request, response) => {
   // Use the Twilio Node.js SDK to build an XML response
   const twiml = new VoiceResponse();
+
+  orderObject.phoneNumber = request.body.From.toString();
 
   const gather = twiml.gather({
     input: 'speech',
@@ -65,6 +72,7 @@ app.post('/name', (request, response) => {
   if (!request.body.SpeechResult) {
     twiml.redirect('/repeat-name');
   } else {
+    orderObject.name = request.body.SpeechResult;
     twiml.say(
       `Willkommen bei "Essen für alle", ${request.body.SpeechResult}.`,
       { language: 'de-DE' }
@@ -114,6 +122,7 @@ app.post('/address', (request, response) => {
   if (!request.body.SpeechResult) {
     twiml.redirect('/repeat-address');
   } else {
+    orderObject.address = request.body.SpeechResult;
     twiml.say(`Ok, wir werden an ${request.body.SpeechResult} liefern.`, {
       language: 'de-DE',
     });
@@ -204,7 +213,8 @@ app.post('/confirm-item', (request, response) => {
   });
 
   if (request.body.SpeechResult) {
-    shoppingItems.push(request.body.SpeechResult);
+    orderObject.shoppingItems.push(request.body.SpeechResult);
+
     gather.say(
       `Sie haben ${request.body.SpeechResult} gesagt. Bitte zum bestätigen drücken Sie bitte die 1.`,
       {
@@ -217,7 +227,7 @@ app.post('/confirm-item', (request, response) => {
     switch (request.body.Digits) {
       case '0':
         twiml.say(
-          `Wir haben folgende Artikeln an Ihre Shop Liste hinzugefügt: ${shoppingItems.toString()}`,
+          `Wir haben folgende Artikeln an Ihre Shop Liste hinzugefügt: ${orderObject.shoppingItems.toString()}`,
           {
             language: 'de-DE',
           }
@@ -228,7 +238,7 @@ app.post('/confirm-item', (request, response) => {
         });
         twiml.hangup();
         axios
-          .post(`${process.env.WEBAPP_URL}/upload`, shoppingItems)
+          .post(`${process.env.WEBAPP_URL}/upload`, orderObject)
           .then(function(response) {
             console.log(response);
           })
@@ -279,7 +289,9 @@ app.post('/save-item', (request, response) => {
           language: 'de-DE',
         });
         gather.say(
-          'Ihre Bestell Artikel würde an Ihre Liste hinzugefügt. Bitte nehnen sie ein weiteres Produkt, oder drücken sie die 0 um ihre Bestellung zu beenden',
+          `Ihre Bestell Artikel ${
+            items.slice(-1)[0]
+          } würde an Ihre Liste hinzugefügt. Bitte nehnen sie ein weiteres Produkt, oder drücken sie die 0 um ihre Bestellung zu beenden`,
           {
             language: 'de-DE',
           }

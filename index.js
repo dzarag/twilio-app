@@ -236,6 +236,13 @@ app.post('/confirm-item', (request, response) => {
         twiml.say('Vielen Dank für Ihre bestellung.', {
           language: 'de-DE',
         });
+        twiml.pause();
+        twiml.say(
+          'Wir melden uns bei Ihnen, wenn wir einen Shopper gefunden haben. Auf wiedersehen.',
+          {
+            language: 'de-DE',
+          }
+        );
         twiml.hangup();
         axios
           .post(`${process.env.WEBAPP_URL}/upload`, orderObject)

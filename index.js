@@ -30,7 +30,7 @@ app.post('/voice', (request, response) => {
     language: 'de-DE',
   });
   gather.say(
-    'Willkommen bei "Essen für alle". Wir helfen Ihnen dabei, jemand zu finden, der für Sie einkauft, wenn sie selbst nicht dazu in der Lage sind. Wenn sich innerhalb von 30 Minuten nach Aufgabe Ihrer Bestellung niemand bei Ihnen meldet, melden wir uns persönlich bei Ihnen. Um zu Beginnen, nennen Sie uns bitte Ihren Namen:',
+    'Willkommen bei "Karotten für Marie". Wir helfen Ihnen dabei, jemand zu finden, der für Sie einkauft, wenn sie selbst nicht dazu in der Lage sind. Wenn sich innerhalb von 30 Minuten nach Aufgabe Ihrer Bestellung niemand bei Ihnen meldet, melden wir uns persönlich bei Ihnen. Um zu Beginnen, nennen Sie uns bitte Ihren Namen:',
     { language: 'de-DE' }
   );
 
@@ -74,7 +74,7 @@ app.post('/name', (request, response) => {
   } else {
     orderObject.name = request.body.SpeechResult;
     twiml.say(
-      `Willkommen bei "Essen für alle", ${request.body.SpeechResult}.`,
+      `Willkommen bei "Karotten für Marie", ${request.body.SpeechResult}.`,
       { language: 'de-DE' }
     );
     twiml.pause();
@@ -192,7 +192,7 @@ app.post('/add-item', (request, response) => {
     language: 'de-DE',
   });
 
-  gather.say(`Nehnen Sie bitte Ihre nächstes Produkt`, {
+  gather.say(`Nehnen Sie bitte Ihre nächstes Artikel`, {
     language: 'de-DE',
   });
 
@@ -216,7 +216,7 @@ app.post('/confirm-item', (request, response) => {
     orderObject.shoppingItems.push(request.body.SpeechResult);
 
     gather.say(
-      `Sie haben ${request.body.SpeechResult} gesagt. Bitte zum bestätigen drücken Sie bitte die 1.`,
+      `Sie haben ${request.body.SpeechResult} gesagt. Zum bestätigen drücken Sie bitte die 1.`,
       {
         language: 'de-DE',
       }
@@ -298,7 +298,7 @@ app.post('/save-item', (request, response) => {
         gather.say(
           `Ihre Bestell Artikel ${
             orderObject.shoppingItems.slice(-1)[0]
-          } würde an Ihre Liste hinzugefügt. Bitte nehnen sie ein weiteres Produkt, oder drücken sie die 0 um ihre Bestellung zu beenden`,
+          } würde an Ihre Liste hinzugefügt. Bitte, nehnen sie ein weiteres Produkt, oder drücken sie die 0 um ihre Bestellung zu beenden`,
           {
             language: 'de-DE',
           }

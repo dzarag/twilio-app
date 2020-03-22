@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const axios = require('axios');
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
 
 const app = express();
@@ -226,6 +227,14 @@ app.post('/confirm-item', (request, response) => {
           language: 'de-DE',
         });
         twiml.hangup();
+        axios
+          .post(`${process.env.WEBAPP_URL}/upload`, shoppingItems)
+          .then(function(response) {
+            console.log(response);
+          })
+          .catch(function(error) {
+            console.log(error);
+          });
       default:
         twiml.redirect('/add-item');
         break;
